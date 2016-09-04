@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>WebAssembly - Full Stack Fest 2016</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/black.css">
@@ -20,12 +20,447 @@
 			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
 			document.getElementsByTagName( 'head' )[0].appendChild( link );
 		</script>
+    <style>
+      /* anything? */
+      ul.nobullet {
+        list-style: none;
+      }
+      .yellowgreen {
+        color: yellowgreen;
+      }
+      .reveal small {
+        vertical-align: inherit;
+      }
+      ul.small > li {
+        font-size: 70%;
+      }
+      .reveal pre code.no-max-height {
+        max-height: inherit;
+      }
+      mark {
+        color: white;
+        background-color: slateblue;
+      }
+    </style>
 	</head>
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+        <section>
+          <h1>WebAssembly</h1>
+          <p>Birth of a Virtual ISA<br> <small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        <!--
+        <section>
+          <h3>Some Stuff I've Worked On</h3>
+          <table>
+            <tr class="fragment">
+              <td><span class="yellowgreen">Games</span></td>
+              <td>
+                <ul class="nobullet">
+                  <li>DS: Incredibles 2, Cars, Ratatouille</li>
+                  <li>Wii: Boom Blox, Boom Blox Bash Party</li>
+                  <li>PC: Overwatch
+                    <small>(before it was Overwatch)</small></li>
+                </ul>
+              </td>
+            </tr>
+            <tr class="fragment">
+              <td><span class="yellowgreen">@ Google</span></td>
+              <td>
+                <ul class="nobullet">
+                  <li>Chrome</li>
+                  <li>Native Client</li>
+                  <li>WebAssembly!</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        </section>
+        -->
+
+        <section>
+          <h3>What is WebAssembly?</h3>
+          <ul>
+            <li>New text and binary format spec</li>
+            <li>Designed to be fast to load and execute</li>
+            <li>A compilation target for languages like C, C++, Rust, etc.</li>
+            <li>Safe</li>
+            <li>Portable</li>
+            <li>Designed by W3C Community Group that includes representatives
+                from all major browsers</li>
+          </ul>
+          <p class="fragment yellowgreen">
+            "shortcut to your JavaScript engine's optimizer"
+          </p>
+        </section>
+
+        <section>
+          <h3>What is WebAssembly <u>not</u>?</h3>
+          <ul>
+            <li>Replacement for JavaScript</li>
+            <li>Compilation target for languages that compile to JavaScript,
+              like Typescript, Coffeescript, etc.</li>
+            <li>Programming language</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Why WebAssembly?</h3>
+          <table>
+            <td>
+              <ul class="small">
+                <li>Image/video editing</li>
+                <li>Image recognition</li>
+                <li>Live video augmentation</li>
+                <li>VR and low-latency</li>
+                <li>CAD applications</li>
+                <li>Scientific visualization and simulation</li>
+                <li>Platform simulation (DOSBox, QEMU, MAME, ...)</li>
+              </ul>
+            </td>
+            <td>
+              <ul class="small">
+                <li>Games</li>
+                <li>Language interpreters and VMs</li>
+                <li>POSIX user-space environment</li>
+                <li>Developer tools (editors, compilers, debuggers, ...)</li>
+                <li>Remote desktop</li>
+                <li>VPN</li>
+                <li>Compression</li>
+                <li>Encryption</li>
+              </ul>
+            </td>
+          </table>
+          <p class="fragment">and more!<br>(use your imagination)</p>
+        </section>
+
+        <section>
+          <h3>Let's start with a simple function...</h3>
+          <pre><code data-trim>
+int fib(int n) {
+  int a = 0;
+  int b = 1;
+  while (n &gt; 0) {
+    int t = b;
+    b = a + b;
+    a = t;
+    n--;
+  }
+  return b;
+}
+          </code></pre>
+        </section>
+
+        <section data-transition="slide-in none-out">
+          <h3>Let's compile this...</h3>
+          <pre>$ emcc -s BINARYEN=1 -s 'EXPORTED_FUNCTIONS=["_fib"]' fib.c -o fib.js</pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's compile this...</h3>
+          <pre>$ emcc -s <mark>BINARYEN=1</mark> -s 'EXPORTED_FUNCTIONS=["_fib"]' fib.c -o fib.js</pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's compile this...</h3>
+          <pre>$ emcc -s BINARYEN=1 <mark>-s 'EXPORTED_FUNCTIONS=["_fib"]'</mark> fib.c -o fib.js</pre>
+        </section>
+
+        <section>
+          <h3>OK, what's happening here?</h3>
+          <ol>
+            <li class="fragment">Compile C using Clang via Emscripten</li>
+            <li class="fragment yellowgreen">Emscripten's JSBackend generates asm.js</li>
+          </ol>
+        </section>
+
+        <section data-transition="slide-in none-out">
+          <h3>Let's take a look at the asm.js</h3>
+          <pre><code data-trim>
+function module(global, env, buffer) {
+  "use asm";
+  ...
+  function fib(n) {
+    n = n|0;
+    var a = 0, b = 1, t = 0;
+    while ((n|0) &gt;= 0) {
+      t = b;
+      b = a + b|0;
+      a = t;
+      n = n - 1|0;
+    }
+    return b|0;
+  }
+  return {fib: fib};
+}
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the asm.js</h3>
+          <pre><code data-trim>
+function module(global, env, buffer) {
+  "use asm";          // &lt;- notify engine to compile as asm.js
+  ...
+  function fib(n) {
+    n = n|0;          // &lt;- parameter type annotation
+    var a = 0, b = 1, t = 0;
+    while ((n|0) &gt;= 0) {
+      t = b;
+      b = a + b|0;    // &lt;- expression annotation
+      a = t;
+      n = n - 1|0;
+    }
+    return b|0;       // &lt;- return value type annotation
+  }
+  return {fib: fib};  // &lt;- export function
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Aside - Why not just use asm.js?</h3>
+          <table>
+            <tr class="fragment">
+              <td class="yellowgreen">Pros:</td>
+              <td>
+                <ul>
+                  <li>asm.js-aware engines can produce good code</li>
+                  <li>"It's just JavaScript" = polyfill for free</li>
+                </ul>
+              </td>
+            </tr>
+            <tr class="fragment">
+              <td class="yellowgreen">Cons:</td>
+              <td>
+                <ul>
+                  <li>Parsing can be expensive</li>
+                  <li>Validation failure = fallback to JavaScript</li>
+                  <li>Hard to extend functionality</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        </section>
+
+        <section>
+          <h3>What's happening here?</h3>
+          <ol>
+            <li>Compile C using Clang via Emscripten</li>
+            <li>Emscripten's JSBackend generates asm.js</li>
+            <li class="fragment yellowgreen">Binaryen's asm2wasm generates WebAssembly text format</li>
+          </ol>
+        </section>
+
+        <section data-transition="slide-in none-out">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    <mark>(local $a i32) (local $b i32)</mark>        ;; $a = 0; $b = 0
+    <mark>(set_local $b (i32.const 1))</mark>         ;; $b = 1
+    (loop $exit $next
+      (br_if $exit
+        (i32.le_s (get_local $n) (i32.const 0)))
+      (set_local $b
+        (i32.add
+          (tee_local $a (get_local $b))
+          (get_local $a)))
+      (set_local $n
+        (i32.sub
+          (get_local $n)
+          (i32.const 1)))
+      (br $next))
+    (return (get_local $b))))
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    (local $a i32) (local $b i32)
+    (set_local $b (i32.const 1))
+    <mark>(loop $exit $next</mark>                    ;; do {
+      (br_if $exit
+        (i32.le_s (get_local $n) (i32.const 0)))
+      (set_local $b
+        (i32.add
+          (tee_local $a (get_local $b))
+          (get_local $a)))
+      (set_local $n
+        (i32.sub
+          (get_local $n)
+          (i32.const 1)))
+      <mark>(br $next))</mark>                        ;; continue; } while(0)
+    (return (get_local $b))))
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    (local $a i32) (local $b i32)
+    (set_local $b (i32.const 1))
+    (loop $exit $next
+      <mark>(br_if $exit</mark>                       ;; if ($n &lt;= 0) break
+        <mark>(i32.le_s (get_local $n) (i32.const 0)))</mark>
+      (set_local $b
+        (i32.add
+          (tee_local $a (get_local $b))
+          (get_local $a)))
+      (set_local $n
+        (i32.sub
+          (get_local $n)
+          (i32.const 1)))
+      (br $next))
+    (return (get_local $b))))
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    (local $a i32) (local $b i32)
+    (set_local $b (i32.const 1))
+    (loop $exit $next
+      (br_if $exit
+        (i32.le_s (get_local $n) (i32.const 0)))
+      <mark>(set_local $b</mark>                      ;; $b = $b + $a
+        <mark>(i32.add</mark>
+          <mark>(tee_local $a (get_local $b))</mark>  ;; $a = $b
+          <mark>(get_local $a)))</mark>
+      (set_local $n
+        (i32.sub
+          (get_local $n)
+          (i32.const 1)))
+      (br $next))
+    (return (get_local $b))))
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    (local $a i32) (local $b i32)
+    (set_local $b (i32.const 1))
+    (loop $exit $next
+      (br_if $exit
+        (i32.le_s (get_local $n) (i32.const 0)))
+      (set_local $b
+        (i32.add
+          (tee_local $a (get_local $b))
+          (get_local $a)))
+      <mark>(set_local $n</mark>                      ;; $n = $n - 1
+        <mark>(i32.sub</mark>
+          <mark>(get_local $n)</mark>
+          <mark>(i32.const 1)))</mark>
+      (br $next))
+    (return (get_local $b))))
+          </code></pre>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm text</h3>
+          <pre><code data-trim data-noescape class="lisp no-max-height">
+(module
+  (func "fib" (param $n i32) (result i32)
+    (local $a i32) (local $b i32)
+    (set_local $b (i32.const 1))
+    (loop $exit $next
+      (br_if $exit
+        (i32.le_s (get_local $n) (i32.const 0)))
+      (set_local $b
+        (i32.add
+          (tee_local $a (get_local $b))
+          (get_local $a)))
+      (set_local $n
+        (i32.sub
+          (get_local $n)
+          (i32.const 1)))
+      (br $next))
+    <mark>(return (get_local $b)))</mark>)            ;; return $b
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>What's happening here?</h3>
+          <ol>
+            <li>Compile C using Clang via Emscripten</li>
+            <li>Emscripten's JSBackend generates asm.js</li>
+            <li>Binaryen's asm2wasm generates WebAssembly text format</li>
+            <li class="fragment yellowgreen">Binaryen's wasm-as generates WebAssembly binary format</li>
+          </ol>
+        </section>
+
+        <!--
+        <section>
+          <h3>(a little) History - asm.js</h3>
+          <ul>
+            <li>Low-level, optimizable subset of JavaScript</li>
+            <li>Linear memory accessed via TypedArrays</li>
+            <li>Import and export functions</li>
+            <li>Functions have type annotations on expressions, parameters and
+              return values</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>WebAssembly Modules</h3>
+          <ul>
+            <li>Functions</li>
+            <li>Linear memory</li>
+            <li>Value Types: i32, i64, f32, f64</li>
+            <li>Global variables</li>
+            <li>Function Table</li>
+            <li>Imports and Exports</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>WebAssembly Functions</h3>
+          <ul>
+            <li>Signature</li>
+            <li>Local variables</li>
+            <li>Instructions </li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>WebAssembly Instructions</h3>
+          <ul>
+            <li>Linear memory accesses</li>
+            <li>Local/Global variable accesses</li>
+            <li>Control flow</li>
+            <li>Function calls</li>
+            <li>Constants</li>
+            <li>32- and 64-bit integer operators</li>
+            <li>32- and 64-bit float operators</li>
+            <li>Type conversions</li>
+          </ul>
+        </section>
+        -->
+
+        <section>
+          <h3>Questions?</h3>
+        </section>
 			</div>
 		</div>
 
@@ -35,7 +470,10 @@
 		<script>
 			// More info https://github.com/hakimel/reveal.js#configuration
 			Reveal.initialize({
-				history: true,
+        controls: true,
+        progress: true,
+				history: false,
+        center: true,
 
 				// More info https://github.com/hakimel/reveal.js#dependencies
 				dependencies: [
