@@ -179,8 +179,8 @@ int fib(int n) {
         <section>
           <h3>OK, what's happening here?</h3>
           <ol>
-            <li class="fragment">Compile C using Clang via Emscripten</li>
-            <li class="fragment yellowgreen">Emscripten's JSBackend generates asm.js</li>
+            <li class="fragment">Compile C code using Clang via Emscripten</li>
+            <li class="fragment yellowgreen">Emscripten generates asm.js</li>
           </ol>
         </section>
 
@@ -257,8 +257,8 @@ function module(global, env, buffer) {
           <h3>What's happening here?</h3>
           <ol>
             <li>Compile C using Clang via Emscripten</li>
-            <li>Emscripten's JSBackend generates asm.js</li>
-            <li class="fragment yellowgreen">Binaryen's asm2wasm generates WebAssembly text format</li>
+            <li>Emscripten generates asm.js</li>
+            <li class="yellowgreen">asm2wasm generates WebAssembly text format</li>
           </ol>
         </section>
 
@@ -267,15 +267,15 @@ function module(global, env, buffer) {
           <pre><code data-trim data-noescape class="lisp no-max-height">
 (module
   (func "fib" (param $n i32) (result i32)
-    <mark>(local $a i32) (local $b i32)</mark>        ;; $a = 0; $b = 0
-    <mark>(set_local $b (i32.const 1))</mark>         ;; $b = 1
+    <mark>(local $a i32) (local $b i32)</mark>          ;; $a = 0; $b = 0
+    <mark>(set_local $b (i32.const 1))</mark>           ;; $b = 1
     (loop $exit $next
       (br_if $exit
         (i32.le_s (get_local $n) (i32.const 0)))
       (set_local $b
         (i32.add
-          (tee_local $a (get_local $b))
-          (get_local $a)))
+          (get_local $a)
+          (tee_local $a (get_local $b))))
       (set_local $n
         (i32.sub
           (get_local $n)
@@ -292,18 +292,18 @@ function module(global, env, buffer) {
   (func "fib" (param $n i32) (result i32)
     (local $a i32) (local $b i32)
     (set_local $b (i32.const 1))
-    <mark>(loop $exit $next</mark>                    ;; do {
+    <mark>(loop $exit $next</mark>                      ;; do {
       (br_if $exit
         (i32.le_s (get_local $n) (i32.const 0)))
       (set_local $b
         (i32.add
-          (tee_local $a (get_local $b))
-          (get_local $a)))
+          (get_local $a)
+          (tee_local $a (get_local $b))))
       (set_local $n
         (i32.sub
           (get_local $n)
           (i32.const 1)))
-      <mark>(br $next))</mark>                        ;; continue; } while(0)
+      <mark>(br $next))</mark>                          ;; continue; } while(0)
     (return (get_local $b))))
           </code></pre>
         </section>
@@ -316,12 +316,12 @@ function module(global, env, buffer) {
     (local $a i32) (local $b i32)
     (set_local $b (i32.const 1))
     (loop $exit $next
-      <mark>(br_if $exit</mark>                       ;; if ($n &lt;= 0) break
+      <mark>(br_if $exit</mark>                         ;; if ($n &lt;= 0) break
         <mark>(i32.le_s (get_local $n) (i32.const 0)))</mark>
       (set_local $b
         (i32.add
-          (tee_local $a (get_local $b))
-          (get_local $a)))
+          (get_local $a)
+          (tee_local $a (get_local $b))))
       (set_local $n
         (i32.sub
           (get_local $n)
@@ -341,10 +341,10 @@ function module(global, env, buffer) {
     (loop $exit $next
       (br_if $exit
         (i32.le_s (get_local $n) (i32.const 0)))
-      <mark>(set_local $b</mark>                      ;; $b = $b + $a
+      <mark>(set_local $b</mark>                        ;; $b = $b + $a
         <mark>(i32.add</mark>
-          <mark>(tee_local $a (get_local $b))</mark>  ;; $a = $b
-          <mark>(get_local $a)))</mark>
+          <mark>(get_local $a)</mark>
+          <mark>(tee_local $a (get_local $b))))</mark>  ;; $a = $b
       (set_local $n
         (i32.sub
           (get_local $n)
@@ -366,9 +366,9 @@ function module(global, env, buffer) {
         (i32.le_s (get_local $n) (i32.const 0)))
       (set_local $b
         (i32.add
-          (tee_local $a (get_local $b))
-          (get_local $a)))
-      <mark>(set_local $n</mark>                      ;; $n = $n - 1
+          (get_local $a)
+          (tee_local $a (get_local $b))))
+      <mark>(set_local $n</mark>                        ;; $n = $n - 1
         <mark>(i32.sub</mark>
           <mark>(get_local $n)</mark>
           <mark>(i32.const 1)))</mark>
@@ -389,14 +389,42 @@ function module(global, env, buffer) {
         (i32.le_s (get_local $n) (i32.const 0)))
       (set_local $b
         (i32.add
-          (tee_local $a (get_local $b))
-          (get_local $a)))
+          (get_local $a)
+          (tee_local $a (get_local $b))))
       (set_local $n
         (i32.sub
           (get_local $n)
           (i32.const 1)))
       (br $next))
-    <mark>(return (get_local $b)))</mark>)            ;; return $b
+    <mark>(return (get_local $b)))</mark>)              ;; return $b
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Stack machine</h3>
+          <pre><code data-trim class="lisp no-max-height">
+i32.const 1        ;; 1
+set_local $b
+block $done
+  loop $top
+    get_local $n   ;; $n
+    i32.const 0    ;; $n 0
+    i32.le_s       ;; ($n &lt;= 0)
+    br_if $done
+    get_local $a   ;; $a
+    get_local $b   ;; $a $b
+    tee_local $a   ;; $a $b
+    i32.add        ;; ($a + $b)
+    set_local $b
+    get_local $n   ;; $n
+    i32.const 1    ;; $n 1
+    i32.sub        ;; ($n - 1)
+    set_local $n
+    br $top
+  end
+end
+get_local $b       ;; $b
+return
           </code></pre>
         </section>
 
@@ -404,10 +432,157 @@ function module(global, env, buffer) {
           <h3>What's happening here?</h3>
           <ol>
             <li>Compile C using Clang via Emscripten</li>
-            <li>Emscripten's JSBackend generates asm.js</li>
-            <li>Binaryen's asm2wasm generates WebAssembly text format</li>
-            <li class="fragment yellowgreen">Binaryen's wasm-as generates WebAssembly binary format</li>
+            <li>Emscripten generates asm.js</li>
+            <li>asm2wasm generates WebAssembly text format</li>
+            <li class="yellowgreen">wasm-as generates WebAssembly binary format</li>
           </ol>
+        </section>
+
+        <section data-transition="slide-in none-out">
+          <h3>Let's take a look at the Wasm binary</h3>
+          <pre><code data-noescape data-trim>
+00000000: <mark>0061 736d 0c00 0000</mark> 0474 7970 6506 0140  <mark>.asm....</mark>.type..@
+00000010: 0101 0101 0866 756e 6374 696f 6e02 0100  .....function...
+00000020: 0665 7870 6f72 7406 0100 0366 6962 0463  .export....fib.c
+00000030: 6f64 652b 0129 0102 0110 0115 0201 0214  ode+.)..........
+00000040: 0010 0050 0700 0114 0114 0219 0140 1502  ...P.........@..
+00000050: 1400 1001 4115 0006 0000 0f0f 1402 09    ....A..........
+          </code></pre>
+          <p><span class="yellowgreen">header</span></p>
+          <p>(version 0xc)</p>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm binary</h3>
+          <pre><code data-noescape data-trim>
+00000000: 0061 736d 0c00 0000 <mark>0474 7970 6506 0140</mark>  .asm....<mark>.type..@</mark>
+00000010: <mark>0101 0101</mark> 0866 756e 6374 696f 6e02 0100  <mark>....</mark>.function...
+00000020: 0665 7870 6f72 7406 0100 0366 6962 0463  .export....fib.c
+00000030: 6f64 652b 0129 0102 0110 0115 0201 0214  ode+.)..........
+00000040: 0010 0050 0700 0114 0114 0219 0140 1502  ...P.........@..
+00000050: 1400 1001 4115 0006 0000 0f0f 1402 09    ....A..........
+          </code></pre>
+          <p><span class="yellowgreen">type section</span></p>
+          <p>(1 type; i32 -&gt; i32)</p>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm binary</h3>
+          <pre><code data-noescape data-trim>
+00000000: 0061 736d 0c00 0000 0474 7970 6506 0140  .asm.....type..@
+00000010: 0101 0101 <mark>0866 756e 6374 696f 6e02 0100</mark>  ....<mark>.function...</mark>
+00000020: 0665 7870 6f72 7406 0100 0366 6962 0463  .export....fib.c
+00000030: 6f64 652b 0129 0102 0110 0115 0201 0214  ode+.)..........
+00000040: 0010 0050 0700 0114 0114 0219 0140 1502  ...P.........@..
+00000050: 1400 1001 4115 0006 0000 0f0f 1402 09    ....A..........
+          </code></pre>
+          <p><span class="yellowgreen">function section</span></p>
+          <p>(1 function; using function type 0)</p>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm binary</h3>
+          <pre><code data-noescape data-trim>
+00000000: 0061 736d 0c00 0000 0474 7970 6506 0140  .asm.....type..@
+00000010: 0101 0101 0866 756e 6374 696f 6e02 0100  .....function...
+00000020: <mark>0665 7870 6f72 7406 0100 0366 6962</mark> 0463  <mark>.export....fib</mark>.c
+00000030: 6f64 652b 0129 0102 0110 0115 0201 0214  ode+.)..........
+00000040: 0010 0050 0700 0114 0114 0219 0140 1502  ...P.........@..
+00000050: 1400 1001 4115 0006 0000 0f0f 1402 09    ....A..........
+          </code></pre>
+          <p><span class="yellowgreen">export section</span></p>
+          <p>(1 export; function 0, named "fib")</p>
+        </section>
+
+        <section data-transition="none">
+          <h3>Let's take a look at the Wasm binary</h3>
+          <pre><code data-noescape data-trim>
+00000000: 0061 736d 0c00 0000 0474 7970 6506 0140  .asm.....type..@
+00000010: 0101 0101 0866 756e 6374 696f 6e02 0100  .....function...
+00000020: 0665 7870 6f72 7406 0100 0366 6962 <mark>0463</mark>  .export....fib<mark>.c</mark>
+00000030: <mark>6f64 652b 0129 0102 0110 0115 0201 0214</mark>  <mark>ode+.)..........</mark>
+00000040: <mark>0010 0050 0700 0114 0114 0219 0140 1502</mark>  <mark>...P.........@..</mark>
+00000050: <mark>1400 1001 4115 0006 0000 0f0f 1402 09</mark>    <mark>....A..........</mark>
+          </code></pre>
+          <p><span class="yellowgreen">code section</span></p>
+          <p>(... really?)</p>
+        </section>
+
+
+        <section data-transition="none">
+          <h3>oh, why not!</h3>
+          <pre><code data-noescape data-trim class="no-max-height">
+0000036: 01           ; local decl count
+0000037: 02 01        ; 2 locals of type i32
+0000039: 10 01        ; i32.const 1
+000003b: 15 02        ; set_local 2
+000003d: 01           ; block
+000003e: 02           ;   loop
+000003f: 14 00        ;     get_local 0
+0000041: 10 00        ;     i32.const 0
+0000043: 50           ;     i32.le_s
+0000044: 07 00 01     ;     br_if (arity = 0, depth = 1)
+0000047: 14 01        ;     get_local 1
+0000049: 14 02        ;     get_local 2
+000004b: 19 01        ;     tee_local 1
+000004d: 40           ;     i32.add
+000004e: 15 02        ;     set_local 2
+0000050: 14 00        ;     get_local 0
+0000052: 10 01        ;     i32.const 1
+0000054: 41           ;     i32.sub
+0000055: 15 00        ;     set_local 0
+0000057: 06 00 00     ;     br (arity = 0, depth = 0)
+000005a: 0f           ;   end
+000005b: 0f           ; end
+000005c: 14 02        ; get_local 2
+000005e: 09           ; return
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>What's happening here?</h3>
+          <ol>
+            <li>Compile C using Clang via Emscripten</li>
+            <li>Emscripten generates asm.js</li>
+            <li>asm2wasm generates WebAssembly text format</li>
+            <li>wasm-as generates WebAssembly binary format</li>
+            <li class="yellowgreen">Load the binary file via JavaScript API</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>JS API</h3>
+          <pre><code class="javascript" data-trim>
+var buf = new ArrayBuffer(...);
+WebAssembly.compile(buf).then(
+    module =&gt; {
+      var instance = new WebAssembly.Instance(module, {});
+      instance.exports.fib(10);
+    });
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>TurboFan graph</h3>
+          <img style="width:40%" src="turbo.png"></img>
+        </section>
+
+        <section>
+          <h3>A lot more to mention...</h3>
+          <ul>
+            <li>Linear memory</li>
+            <li>Other control flow operators (br_table, if/else)</li>
+            <li>Function calls - direct and indirect</li>
+            <li>Importing functions</li>
+            <li>Importing/exporting memory and function tables</li>
+            <li>32- and 64-bit floating-point operations</li>
+            <li>"Start" function</li>
+            <li>Global variables</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Questions?</h3>
         </section>
 
         <!--
@@ -458,9 +633,6 @@ function module(global, env, buffer) {
         </section>
         -->
 
-        <section>
-          <h3>Questions?</h3>
-        </section>
 			</div>
 		</div>
 
