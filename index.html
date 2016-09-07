@@ -41,6 +41,17 @@
         color: white;
         background-color: slateblue;
       }
+      .table-width {
+        width: 300px;
+      }
+      box {
+        background: #3f3f3f;
+        color: #dcdcdc;
+        display: block;
+        border: 2px solid white;
+        padding: 5px;
+        margin: 5px;
+      }
     </style>
 	</head>
 	<body>
@@ -102,6 +113,10 @@
           <p class="fragment yellowgreen">
             "shortcut to your JavaScript engine's optimizer"
           </p>
+        </section>
+
+        <section>
+          <h3>Aside - JavaScript Optimization tiers</h3>
         </section>
 
         <section>
@@ -184,6 +199,9 @@ int fib(int n) {
           </ol>
         </section>
 
+        <!-- ASM.JS TEXT START -->
+        <section>
+
         <section data-transition="slide-in none-out">
           <h3>Let's take a look at the asm.js</h3>
           <pre><code data-trim>
@@ -208,25 +226,28 @@ function module(global, env, buffer) {
 
         <section data-transition="none">
           <h3>Let's take a look at the asm.js</h3>
-          <pre><code data-trim>
+          <pre><code data-noescape data-trim>
 function module(global, env, buffer) {
-  "use asm";          // &lt;- notify engine to compile as asm.js
+  <mark>"use asm"</mark>;          // &lt;- notify engine to compile as asm.js
   ...
   function fib(n) {
-    n = n|0;          // &lt;- parameter type annotation
+    <mark>n = n|0</mark>;          // &lt;- parameter type annotation
     var a = 0, b = 1, t = 0;
     while ((n|0) &gt;= 0) {
       t = b;
-      b = a + b|0;    // &lt;- expression annotation
+      b = <mark>a + b|0</mark>;    // &lt;- expression annotation
       a = t;
       n = n - 1|0;
     }
-    return b|0;       // &lt;- return value type annotation
+    return <mark>b|0</mark>;       // &lt;- return value type annotation
   }
-  return {fib: fib};  // &lt;- export function
+  return <mark>{fib: fib}</mark>;  // &lt;- export function
 }
           </code></pre>
         </section>
+
+        </section>
+        <!-- ASM.JS TEXT END -->
 
         <section>
           <h3>Aside - Why not just use asm.js?</h3>
@@ -247,6 +268,7 @@ function module(global, env, buffer) {
                   <li>Parsing can be expensive</li>
                   <li>Validation failure = fallback to JavaScript</li>
                   <li>Hard to extend functionality</li>
+                  <li>No 64-bit integers!</li>
                 </ul>
               </td>
             </tr>
@@ -261,6 +283,9 @@ function module(global, env, buffer) {
             <li class="yellowgreen">asm2wasm generates WebAssembly text format</li>
           </ol>
         </section>
+
+        <!-- WASM TEXT START -->
+        <section>
 
         <section data-transition="slide-in none-out">
           <h3>Let's take a look at the Wasm text</h3>
@@ -400,33 +425,1742 @@ function module(global, env, buffer) {
           </code></pre>
         </section>
 
+        </section>
+        <!-- WASM TEXT END -->
+
         <section>
           <h3>Stack machine</h3>
           <pre><code data-trim class="lisp no-max-height">
-i32.const 1        ;; 1
+i32.const 1
 set_local $b
 block $done
   loop $top
-    get_local $n   ;; $n
-    i32.const 0    ;; $n 0
-    i32.le_s       ;; ($n &lt;= 0)
+    get_local $n
+    i32.const 0
+    i32.le_s
     br_if $done
-    get_local $a   ;; $a
-    get_local $b   ;; $a $b
-    tee_local $a   ;; $a $b
-    i32.add        ;; ($a + $b)
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
     set_local $b
-    get_local $n   ;; $n
-    i32.const 1    ;; $n 1
-    i32.sub        ;; ($n - 1)
+    get_local $n
+    i32.const 1
+    i32.sub
     set_local $n
     br $top
   end
 end
-get_local $b       ;; $b
+get_local $b
 return
           </code></pre>
         </section>
+
+        <!--    STACK MACHINE START!! -->
+        <section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+<mark>i32.const 1</mark>
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=0</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+<mark>set_local $b</mark>
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=0</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+<mark>    get_local $n</mark>
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+<mark>    i32.const 0</mark>
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>3</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+<mark>    i32.le_s</mark>
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>3</box><box>0</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+<mark>    br_if $done</mark>
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+<mark>    get_local $a</mark>
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+<mark>    get_local $b</mark>
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+<mark>    tee_local $a</mark>
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box><box>1</box></td>
+            <td><box>$n=3</box><box>$a=0</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+<mark>    i32.add</mark>
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box><box>1</box></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+<mark>    set_local $b</mark>
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+<mark>    get_local $n</mark>
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+<mark>    i32.const 1</mark>
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>3</box></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+<mark>    i32.sub</mark>
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>3</box><box>1</box></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+<mark>    set_local $n</mark>
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box></td>
+            <td><box>$n=3</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+<mark>    br $top</mark>
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+<mark>    get_local $n</mark>
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+<mark>    i32.const 0</mark>
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+<mark>    i32.le_s</mark>
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box><box>0</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+<mark>    br_if $done</mark>
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+<mark>    get_local $a</mark>
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+<mark>    get_local $b</mark>
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+<mark>    tee_local $a</mark>
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>1</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+<mark>    i32.add</mark>
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>1</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+<mark>    set_local $b</mark>
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=1</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+<mark>    get_local $n</mark>
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+<mark>    i32.const 1</mark>
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+<mark>    i32.sub</mark>
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>2</box><box>1</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+<mark>    set_local $n</mark>
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=2</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+<mark>    br $top</mark>
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+<mark>    get_local $n</mark>
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+<mark>    i32.const 0</mark>
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+<mark>    i32.le_s</mark>
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>0</box></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+<mark>    br_if $done</mark>
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+<mark>    get_local $a</mark>
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+<mark>    get_local $b</mark>
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+<mark>    tee_local $a</mark>
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>2</box></td>
+            <td><box>$n=1</box><box>$a=1</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+<mark>    i32.add</mark>
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>2</box></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+<mark>    set_local $b</mark>
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>3</box></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=2</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+<mark>    get_local $n</mark>
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+<mark>    i32.const 1</mark>
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+<mark>    i32.sub</mark>
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box><box>1</box></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+<mark>    set_local $n</mark>
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=1</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+<mark>    br $top</mark>
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+<mark>    get_local $n</mark>
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+<mark>    i32.const 0</mark>
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+<mark>    i32.le_s</mark>
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>0</box><box>0</box></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+<mark>    br_if $done</mark>
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+return
+          </code></pre>
+            </td>
+            <td><box>1</box></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+<mark>get_local $b</mark>
+return
+          </code></pre>
+            </td>
+            <td></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <table>
+            <tr><td>code</td><td>stack</td><td>locals</td></tr>
+            <td>
+          <pre><code data-noescape data-trim class="lisp no-max-height table-width">
+i32.const 1
+set_local $b
+block $done
+  loop $top
+    get_local $n
+    i32.const 0
+    i32.le_s
+    br_if $done
+    get_local $a
+    get_local $b
+    tee_local $a
+    i32.add
+    set_local $b
+    get_local $n
+    i32.const 1
+    i32.sub
+    set_local $n
+    br $top
+  end
+end
+get_local $b
+<mark>return</mark>
+          </code></pre>
+            </td>
+            <td><box>3</box></td>
+            <td><box>$n=0</box><box>$a=2</box><box>$b=3</box></td>
+          </table>
+        </section>
+
+        </section>
+        <!--    STACK MACHINE END!! -->
 
         <section>
           <h3>What's happening here?</h3>
@@ -437,6 +2171,9 @@ return
             <li class="yellowgreen">wasm-as generates WebAssembly binary format</li>
           </ol>
         </section>
+
+        <!-- WASM BINARY START -->
+        <section>
 
         <section data-transition="slide-in none-out">
           <h3>Let's take a look at the Wasm binary</h3>
@@ -508,7 +2245,6 @@ return
           <p>(... really?)</p>
         </section>
 
-
         <section data-transition="none">
           <h3>oh, why not!</h3>
           <pre><code data-noescape data-trim class="no-max-height">
@@ -538,6 +2274,9 @@ return
 000005e: 09           ; return
           </code></pre>
         </section>
+
+        </section>
+        <!-- WASM BINARY END -->
 
         <section>
           <h3>What's happening here?</h3>
