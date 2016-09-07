@@ -21,7 +21,12 @@
 			document.getElementsByTagName( 'head' )[0].appendChild( link );
 		</script>
     <style>
-      /* anything? */
+      span.great {
+        background-color: #ff0000;
+        color: #efefef;
+        padding: 5px;
+        border-radius: 4px;
+      }
       ul.nobullet {
         list-style: none;
       }
@@ -58,8 +63,11 @@
 		<div class="reveal">
 			<div class="slides">
         <section>
+        <!-- START SUBTITLE JOKES -->
+
+        <section data-transition="none">
           <h1>WebAssembly</h1>
-          <p>Birth of a Virtual ISA<br> <small>Sep 8, 2016</small></p>
+          <p>Birth of a Virtual ISA<br><small>Sep 8, 2016</small></p>
           <table>
             <td>
               <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
@@ -69,6 +77,74 @@
             </td>
           </table>
         </section>
+
+        <section data-transition="none">
+          <h1>WebAssembly</h1>
+          <p><span>We Be Assemblin'</span><br><small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <h1>WebAssembly</h1>
+          <p><span>The Right To Peaceably Assemble</span><br><small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <h1>WebAssembly</h1>
+          <p><span>Simply 'ssembling</span><br><small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <h1>WebAssembly</h1>
+          <p><span class="great">Make WebAssembly Great Again</span><br><small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        <section data-transition="none">
+          <h1>WebAssembly</h1>
+          <p><i>With a Vengeance</i><br><small>Sep 8, 2016</small></p>
+          <table>
+            <td>
+              <small>Ben Smith <a href="http://twitter.com/binjimint">@binjimint</a></small>
+            </td>
+            <td>
+              <img src="benji2x.png"></img>
+            </td>
+          </table>
+        </section>
+
+        </section>
+        <!-- END SUBTITLE JOKES -->
 
         <!--
         <section>
@@ -101,10 +177,10 @@
 
         <section>
           <h3>What is WebAssembly?</h3>
-          <ul>
+          <ul class="fragment">
             <li>New text and binary format spec</li>
             <li>Designed to be fast to load and execute</li>
-            <li>A compilation target for languages like C, C++, Rust, etc.</li>
+            <li>Compilation target for languages like C, C++, Rust, etc.</li>
             <li>Safe</li>
             <li>Portable</li>
             <li>Designed by W3C Community Group that includes representatives
@@ -116,15 +192,20 @@
         </section>
 
         <section>
-          <h3>Aside - JavaScript Optimization tiers</h3>
+          <h3>Aside - JavaScript Optimization</h3>
+          <ul>
+            <li>Tiered; hotter code is optimized more</li>
+            <li>Gather type information while executing</li>
+            <li>Make assumptions based on type information</li>
+            <li>Failed assumption =&gt; "Deoptimization"</li>
+          </ul>
         </section>
 
         <section>
           <h3>What is WebAssembly <u>not</u>?</h3>
-          <ul>
+          <ul class="fragment">
             <li>Replacement for JavaScript</li>
-            <li>Compilation target for languages that compile to JavaScript,
-              like Typescript, Coffeescript, etc.</li>
+            <li>Compilation target for languages that compile to JavaScript</li>
             <li>Programming language</li>
           </ul>
         </section>
@@ -157,6 +238,7 @@
             </td>
           </table>
           <p class="fragment">and more!<br>(use your imagination)</p>
+          <p class="fragment">or just read <a href="https://github.com/WebAssembly/design/UseCases.md">here</a></p>
         </section>
 
         <section>
@@ -176,20 +258,26 @@ int fib(int n) {
           </code></pre>
         </section>
 
-        <section data-transition="slide-in none-out">
+        <!-- START COMPILE -->
+        <section>
+
+        <section data-transition="slide-in">
           <h3>Let's compile this...</h3>
           <pre>$ emcc -s BINARYEN=1 -s 'EXPORTED_FUNCTIONS=["_fib"]' fib.c -o fib.js</pre>
         </section>
 
         <section data-transition="none">
           <h3>Let's compile this...</h3>
-          <pre>$ emcc -s <mark>BINARYEN=1</mark> -s 'EXPORTED_FUNCTIONS=["_fib"]' fib.c -o fib.js</pre>
+          <pre>$ emcc <mark>-s BINARYEN=1</mark> -s 'EXPORTED_FUNCTIONS=["_fib"]' fib.c -o fib.js</pre>
         </section>
 
         <section data-transition="none">
           <h3>Let's compile this...</h3>
           <pre>$ emcc -s BINARYEN=1 <mark>-s 'EXPORTED_FUNCTIONS=["_fib"]'</mark> fib.c -o fib.js</pre>
         </section>
+
+        </section>
+        <!-- END COMPILE -->
 
         <section>
           <h3>OK, what's happening here?</h3>
@@ -202,7 +290,7 @@ int fib(int n) {
         <!-- ASM.JS TEXT START -->
         <section>
 
-        <section data-transition="slide-in none-out">
+        <section data-transition="slide-in">
           <h3>Let's take a look at the asm.js</h3>
           <pre><code data-trim>
 function module(global, env, buffer) {
@@ -287,7 +375,7 @@ function module(global, env, buffer) {
         <!-- WASM TEXT START -->
         <section>
 
-        <section data-transition="slide-in none-out">
+        <section data-transition="slide-in">
           <h3>Let's take a look at the Wasm text</h3>
           <pre><code data-trim data-noescape class="lisp no-max-height">
 (module
@@ -2175,7 +2263,7 @@ get_local $b
         <!-- WASM BINARY START -->
         <section>
 
-        <section data-transition="slide-in none-out">
+        <section data-transition="slide-in">
           <h3>Let's take a look at the Wasm binary</h3>
           <pre><code data-noescape data-trim>
 00000000: <mark>0061 736d 0c00 0000</mark> 0474 7970 6506 0140  <mark>.asm....</mark>.type..@
@@ -2289,7 +2377,10 @@ get_local $b
           </ol>
         </section>
 
+        <!-- START JS API -->
         <section>
+
+        <section data-transition="slide-in">
           <h3>JS API</h3>
           <pre><code class="javascript" data-trim>
 var buf = new ArrayBuffer(...);
@@ -2300,6 +2391,21 @@ WebAssembly.compile(buf).then(
     });
           </code></pre>
         </section>
+
+        <section data-transition="none">
+          <h3>JS API</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+var buf = new ArrayBuffer(...);
+<mark>WebAssembly</mark>.compile(buf).then(
+    module =&gt; {
+      var instance = new <mark>WebAssembly</mark>.Instance(module, {});
+      instance.exports.fib(10);
+    });
+          </code></pre>
+        </section>
+
+        </section>
+        <!-- END JS API -->
 
         <section>
           <h3>TurboFan graph</h3>
@@ -2318,6 +2424,12 @@ WebAssembly.compile(buf).then(
             <li>"Start" function</li>
             <li>Global variables</li>
           </ul>
+        </section>
+
+        <section>
+          <h3>Want to know more?</h3>
+          <h3>Want to help?</h3>
+          <a href="https://github.com/WebAssembly">github.com/WebAssembly</a>
         </section>
 
         <section>
