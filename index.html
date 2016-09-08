@@ -146,7 +146,6 @@
         </section>
         <!-- END SUBTITLE JOKES -->
 
-        <!--
         <section>
           <h3>Some Stuff I've Worked On</h3>
           <table>
@@ -173,7 +172,6 @@
             </tr>
           </table>
         </section>
-        -->
 
         <section>
           <h3>What is WebAssembly?</h3>
@@ -241,8 +239,12 @@
           <p class="fragment">or just read <a href="https://github.com/WebAssembly/design/UseCases.md">here</a></p>
         </section>
 
+        <!-- START C EXAMPLE -->
+        <section>
+
         <section>
           <h3>Let's start with a simple function...</h3>
+          <p>In C</p>
           <pre><code data-trim>
 int fib(int n) {
   int a = 0;
@@ -257,6 +259,45 @@ int fib(int n) {
 }
           </code></pre>
         </section>
+
+        <section>
+          <h3>Let's start with a simple function...</h3>
+          <p>In C++</p>
+          <pre><code data-trim>
+int fib(int n) {
+  int a = 0;
+  int b = 1;
+  while (n &gt; 0) {
+    int t = b;
+    b = a + b;
+    a = t;
+    n--;
+  }
+  return b;
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Let's start with a simple function...</h3>
+          <p>In C++14</p>
+          <pre><code data-trim>
+auto fib(int n) {
+  auto a = 0;
+  auto b = 1;
+  while (n &gt; 0) {
+    auto t = b;
+    b = a + b;
+    a = t;
+    n--;
+  }
+  return b;
+}
+          </code></pre>
+        </section>
+
+        </section>
+        <!-- END C EXAMPLE -->
 
         <!-- START COMPILE -->
         <section>
@@ -285,6 +326,17 @@ int fib(int n) {
             <li class="fragment">Compile C code using Clang via Emscripten</li>
             <li class="fragment yellowgreen">Emscripten generates asm.js</li>
           </ol>
+        </section>
+
+        <section>
+          <h3>(a little) History - asm.js</h3>
+          <ul>
+            <li>Low-level, optimizable subset of JavaScript</li>
+            <li>Linear memory accessed via TypedArrays</li>
+            <li>Import and export functions</li>
+            <li>Functions have type annotations on expressions, parameters and
+              return values</li>
+          </ul>
         </section>
 
         <!-- ASM.JS TEXT START -->
@@ -2404,13 +2456,190 @@ var buf = new ArrayBuffer(...);
           </code></pre>
         </section>
 
+        <section>
+          <h3>My claim to fame!</h3>
+          <img src="webassembly.png"></img>
+        </section>
+
         </section>
         <!-- END JS API -->
+
+        <section>
+          <h3>What's happening here?</h3>
+          <ol>
+            <li>Compile C using Clang via Emscripten</li>
+            <li>Emscripten generates asm.js</li>
+            <li>asm2wasm generates WebAssembly text format</li>
+            <li>wasm-as generates WebAssembly binary format</li>
+            <li>Load the binary file via JavaScript API</li>
+            <li class="yellowgreen">Translate the JavaScript to machine code</li>
+          </ol>
+        </section>
 
         <section>
           <h3>TurboFan graph</h3>
           <img style="width:40%" src="turbo.png"></img>
         </section>
+
+        <!-- BEGIN X86-64 -->
+        <section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+<mark>13  xorl rdx,rdx</mark>          ; a = 0
+<mark>15  movl rbx,0x1</mark>          ; b = 1
+20  nop
+31  nop
+32  cmpl rax,0x0
+35  jle 58
+41  leal rdx,[rdx+rbx*1]
+44  subl rax,0x1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+56  jmp 32
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+<mark>32  cmpl rax,0x0</mark>          ; if (n <= 0) break
+<mark>35  jle 58</mark>
+41  leal rdx,[rdx+rbx*1]
+44  subl rax,0x1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+56  jmp 32
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+32  cmpl rax,0x0
+35  jle 58
+<mark>41  leal rdx,[rdx+rbx*1]</mark>  ; a = b + a
+44  subl rax,0x1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+56  jmp 32
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+32  cmpl rax,0x0
+35  jle 58
+41  leal rdx,[rdx+rbx*1]
+<mark>44  subl rax,0x1</mark>          ; n = n - 1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+56  jmp 32
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+32  cmpl rax,0x0
+35  jle 58
+41  leal rdx,[rdx+rbx*1]
+44  subl rax,0x1
+<mark>47  REX.W movq r10,rdx</mark>    ; t = a
+<mark>50  REX.W movq rdx,rbx</mark>    ; a = b
+<mark>53  REX.W movq rbx,r10</mark>    ; b = t
+56  jmp 32
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+<mark>32  cmpl rax,0x0</mark>          ; here:
+35  jle 58
+41  leal rdx,[rdx+rbx*1]
+44  subl rax,0x1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+<mark>56  jmp 32</mark>                ; goto here
+58  REX.W movq rax,rbx
+61  retl
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Generated x86-64 assembly</h3>
+          <pre><code class="javascript" data-noescape data-trim>
+0   REX.W cmpq rsp,[r13+0xb90]
+7   jna 62
+13  xorl rdx,rdx
+15  movl rbx,0x1
+20  nop
+31  nop
+32  cmpl rax,0x0
+35  jle 58
+41  leal rdx,[rdx+rbx*1]
+44  subl rax,0x1
+47  REX.W movq r10,rdx
+50  REX.W movq rdx,rbx
+53  REX.W movq rbx,r10
+56  jmp 32
+<mark>58  REX.W movq rax,rbx</mark>    ; return b
+<mark>61  retl</mark>
+          </code></pre>
+        </section>
+
+        </section>
+        <!-- END X86-64 -->
 
         <section>
           <h3>A lot more to mention...</h3>
@@ -2437,17 +2666,6 @@ var buf = new ArrayBuffer(...);
         </section>
 
         <!--
-        <section>
-          <h3>(a little) History - asm.js</h3>
-          <ul>
-            <li>Low-level, optimizable subset of JavaScript</li>
-            <li>Linear memory accessed via TypedArrays</li>
-            <li>Import and export functions</li>
-            <li>Functions have type annotations on expressions, parameters and
-              return values</li>
-          </ul>
-        </section>
-
         <section>
           <h3>WebAssembly Modules</h3>
           <ul>
@@ -2493,6 +2711,7 @@ var buf = new ArrayBuffer(...);
 		<script>
 			// More info https://github.com/hakimel/reveal.js#configuration
 			Reveal.initialize({
+        transition: 'none',
         controls: true,
         progress: true,
 				history: false,
