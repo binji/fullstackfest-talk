@@ -9,6 +9,8 @@
   </style>
   <canvas width="160" height="144"></canvas>
   <script>
+    var rom = location.href.split('?')[1].split('=')[1];
+
     function loaded() {
       console.log('loaded()');
 
@@ -17,7 +19,7 @@
       var imageData = ctx.createImageData(canvasEl.width, canvasEl.height);
 
       var romData = 0, romSize = 0;
-      get('game.gb', function(src) {
+      get(rom, function(src) {
         romData = Module._malloc(src.byteLength);
         romSize = src.byteLength;
         HEAPU8.set(new Uint8Array(src), romData, romSize);
